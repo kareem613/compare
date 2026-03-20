@@ -4,6 +4,7 @@ import { calculateDelta, calculateScenario, createScenarioRecord, estimateTax, H
 import { deleteScenarioRecord, listScenarioRecords, saveScenarioRecord } from './scenarioStore'
 
 const PAGE_OPTIONS = ['current', 'offer', 'delta']
+const COMP_VIEW_OPTIONS = ['gross', 'net']
 const CURRENCY = new Intl.NumberFormat('en-CA', {
   style: 'currency',
   currency: 'CAD',
@@ -36,6 +37,29 @@ function formatScenarioUpdated(value) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function modeLabel(compView) {
+  return compView === 'gross' ? 'gross' : 'net'
+}
+
+function modeLabelTitle(compView) {
+  return compView === 'gross' ? 'Gross' : 'Net'
+}
+
+function scenarioValueForMode(row, compView) {
+  if (!row) return 0
+  return compView === 'gross' ? row.totalGross : row.netWithRsu
+}
+
+function deltaValueForMode(row, compView) {
+  if (!row) return 0
+  return compView === 'gross' ? row.totalGrossDelta : row.netDelta
+}
+
+function deltaCumulativeValueForMode(row, compView) {
+  if (!row) return 0
+  return compView === 'gross' ? row.cumulativeGrossDelta : row.cumulativeNetDelta
 }
 
 function NumberField({ label, value, suffix, step = 1, min = 0, onChange }) {
@@ -217,7 +241,7 @@ function DataTable({ title, columns, rows, renderRow }) {
   )
 }
 
-function CommandBar({ activeScenario, page, records, onPageChange, onSelect, onCreate, onDuplicate, onDelete }) {
+function CommandBar({ activeScenario, compView, page, records, onCompViewChange, onPageChange, onSelect, onCreate, onDuplicate, onDelete }) {
   const labels = {
     current: 'Current',
     offer: 'Offer',
@@ -242,6 +266,21 @@ function CommandBar({ activeScenario, page, records, onPageChange, onSelect, onC
           </button>
         ))}
       </nav>
+
+      <div className="command-bar__mode" role="tablist" aria-label="Gross or net view">
+        {COMP_VIEW_OPTIONS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            role="tab"
+            aria-selected={compView === option}
+            className={compView === option ? 'tab-button tab-button--active' : 'tab-button'}
+            onClick={() => onCompViewChange(option)}
+          >
+            {modeLabelTitle(option)}
+          </button>
+        ))}
+      </div>
 
       <div className="command-bar__scenario">
         <select value={activeScenario.id} onChange={(event) => onSelect(event.target.value)} aria-label="Select scenario">
@@ -330,28 +369,35 @@ function SummaryStrip({ eyebrow, title, detail }) {
   )
 }
 
-function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, tableTitle, tableColumns, renderRow }) {
+function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, tableTitle, tableColumns, renderRow, compView }) {
   const yearOne = projection.rows[0]
+  const yearTen = projection.rows.at(-1)
+  const selectedTotal = compView === 'gross' ? projection.totals.gross : projection.totals.net
+  const selectedYearOne = scenarioValueForMode(yearOne, compView)
+  const selectedYearTen = scenarioValueForMode(yearTen, compView)
 
   return (
     <>
       <SummaryStrip eyebrow={eyebrow} title={title} detail={detail} />
 
       <section className="metrics-grid">
-        <MetricCard label="10Y gross" value={formatCompactMoney(projection.totals.gross)} detail="Cash plus vested equity." tone={tone} />
-        <MetricCard label="10Y net" value={formatCompactMoney(projection.totals.net)} detail="After estimated tax." tone={tone} />
-        <MetricCard label="Year 1 take-home" value={formatCompactMoney(yearOne.netWithRsu)} detail={`Effective tax ${formatPercent(taxRate)}.`} tone="neutral" />
+        <MetricCard label={`10Y ${modeLabel(compView)}`} value={formatCompactMoney(selectedTotal)} detail={compView === 'gross' ? 'Cash plus vested equity.' : 'After estimated tax.'} tone={tone} />
+        <MetricCard label={`Year 1 ${modeLabel(compView)}`} value={formatCompactMoney(selectedYearOne)} detail={compView === 'gross' ? 'Opening-year compensation.' : `Effective tax ${formatPercent(taxRate)}.`} tone="neutral" />
+        <MetricCard label={`Year 10 ${modeLabel(compView)}`} value={formatCompactMoney(selectedYearTen)} detail="How the model exits the horizon." tone="neutral" />
         <MetricCard label="10Y vested equity" value={formatCompactMoney(projection.totals.equity)} detail="Recognized over time." tone="neutral" />
       </section>
 
       <section className="content-grid">
         <TrajectoryChart
-          title={`${eyebrow} income path`}
-          subtitle={`Gross and net compensation over ${HORIZON_YEARS} years in ${projection.region.label}.`}
+          title={`${eyebrow} ${modeLabel(compView)} path`}
+          subtitle={`${modeLabelTitle(compView)} compensation over ${HORIZON_YEARS} years in ${projection.region.label}.`}
           rows={projection.rows}
           lines={[
-            { label: 'Gross incl. RSU', color: tone === 'current' ? '#e6c470' : '#58d0d6', value: (row) => row.totalGross },
-            { label: 'Net incl. RSU', color: tone === 'current' ? '#ff9d82' : '#ee89be', value: (row) => row.netWithRsu },
+            {
+              label: `${modeLabelTitle(compView)} incl. RSU`,
+              color: tone === 'current' ? '#e6c470' : '#58d0d6',
+              value: (row) => scenarioValueForMode(row, compView),
+            },
           ]}
         />
         <EquityStackChart title={`${eyebrow} vested equity`} subtitle="Stacked by grant vintage." stacking={projection.stacking} />
@@ -362,11 +408,11 @@ function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, t
   )
 }
 
-function DeltaPage({ currentProjection, offerProjection, deltaRows }) {
-  const cumulativeGross = deltaRows.at(-1)?.cumulativeGrossDelta ?? 0
-  const cumulativeNet = deltaRows.at(-1)?.cumulativeNetDelta ?? 0
-  const yearOneDelta = deltaRows[0]?.netDelta ?? 0
-  const yearTenDelta = deltaRows.at(-1)?.netDelta ?? 0
+function DeltaPage({ currentProjection, offerProjection, deltaRows, compView }) {
+  const cumulativeModeDelta = deltaCumulativeValueForMode(deltaRows.at(-1), compView) ?? 0
+  const yearOneDelta = deltaValueForMode(deltaRows[0], compView) ?? 0
+  const yearTenDelta = deltaValueForMode(deltaRows.at(-1), compView) ?? 0
+  const equityDelta = offerProjection.totals.equity - currentProjection.totals.equity
 
   return (
     <>
@@ -377,30 +423,29 @@ function DeltaPage({ currentProjection, offerProjection, deltaRows }) {
       />
 
       <section className="metrics-grid">
-        <MetricCard label="10Y gross delta" value={formatCompactMoney(cumulativeGross)} detail="Offer minus current." tone={cumulativeGross >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label="10Y net delta" value={formatCompactMoney(cumulativeNet)} detail="After tax and vesting." tone={cumulativeNet >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label="Year 1 net delta" value={formatCompactMoney(yearOneDelta)} detail="Immediate take-home change." tone={yearOneDelta >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label="Year 10 net delta" value={formatCompactMoney(yearTenDelta)} detail="Where the model finishes." tone={yearTenDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label={`10Y ${modeLabel(compView)} delta`} value={formatCompactMoney(cumulativeModeDelta)} detail="Offer minus current." tone={cumulativeModeDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label={`Year 1 ${modeLabel(compView)} delta`} value={formatCompactMoney(yearOneDelta)} detail="Immediate change." tone={yearOneDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label={`Year 10 ${modeLabel(compView)} delta`} value={formatCompactMoney(yearTenDelta)} detail="Where the model finishes." tone={yearTenDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label="10Y equity delta" value={formatCompactMoney(equityDelta)} detail="Vested equity gap over time." tone={equityDelta >= 0 ? 'positive' : 'negative'} />
       </section>
 
       <section className="content-grid">
         <TrajectoryChart
-          title="Delta trajectory"
+          title={`${modeLabelTitle(compView)} delta trajectory`}
           subtitle="Positive years favor the offer. Negative years expose dilution or weaker cash mix."
           rows={deltaRows}
           lines={[
-            { label: 'Gross delta', color: '#e6c470', value: (row) => row.totalGrossDelta },
-            { label: 'Net delta', color: '#58d0d6', value: (row) => row.netDelta },
-            { label: 'Cumulative net delta', color: '#ee89be', value: (row) => row.cumulativeNetDelta },
+            { label: `${modeLabelTitle(compView)} delta`, color: '#58d0d6', value: (row) => deltaValueForMode(row, compView) },
+            { label: `Cumulative ${modeLabel(compView)} delta`, color: '#ee89be', value: (row) => deltaCumulativeValueForMode(row, compView) },
           ]}
         />
         <TrajectoryChart
-          title="Current vs offer take-home"
-          subtitle="A direct overlay of the two net-income paths."
+          title={`Current vs offer ${modeLabel(compView)}`}
+          subtitle={`A direct overlay of the two ${modeLabel(compView)} paths.`}
           rows={currentProjection.rows}
           lines={[
-            { label: 'Current net', color: '#e6c470', value: (_, index) => currentProjection.rows[index].netWithRsu },
-            { label: 'Offer net', color: '#58d0d6', value: (_, index) => offerProjection.rows[index].netWithRsu },
+            { label: `Current ${modeLabel(compView)}`, color: '#e6c470', value: (_, index) => scenarioValueForMode(currentProjection.rows[index], compView) },
+            { label: `Offer ${modeLabel(compView)}`, color: '#58d0d6', value: (_, index) => scenarioValueForMode(offerProjection.rows[index], compView) },
           ]}
         />
       </section>
@@ -431,6 +476,7 @@ function App() {
   const [records, setRecords] = useState([])
   const [activeScenarioId, setActiveScenarioId] = useState(null)
   const [page, setPage] = useState('current')
+  const [compView, setCompView] = useState('net')
   const [storageStatus, setStorageStatus] = useState('Opening local workspace…')
   const [storageTone, setStorageTone] = useState('neutral')
 
@@ -581,8 +627,10 @@ function App() {
     <main className="simulator-shell">
       <CommandBar
         activeScenario={activeScenario}
+        compView={compView}
         page={page}
         records={records}
+        onCompViewChange={setCompView}
         onPageChange={setPage}
         onSelect={setActiveScenarioId}
         onCreate={addScenario}
@@ -602,6 +650,7 @@ function App() {
               tone="current"
               projection={currentProjection}
               taxRate={currentTaxRate}
+              compView={compView}
               rows={currentProjection.rows}
               tableTitle="Current role yearly breakdown"
               tableColumns={['Year', 'Base', 'Variable', 'RSU Grant', 'Gross (Base+Var)', 'Total Gross', 'Tax Rate', 'Net (Base+Var)', 'Net (inc. RSU)']}
@@ -629,6 +678,7 @@ function App() {
               tone="offer"
               projection={offerProjection}
               taxRate={offerTaxRate}
+              compView={compView}
               rows={offerProjection.rows}
               tableTitle="New offer yearly breakdown"
               tableColumns={['Year', 'Base', 'Variable', 'RSU Grant', 'Gross (Base+Var)', 'Total Gross', 'Tax Rate', 'Net (Base+Var)', 'Net (inc. RSU)']}
@@ -648,7 +698,7 @@ function App() {
             />
           ) : null}
 
-          {page === 'delta' ? <DeltaPage currentProjection={currentProjection} offerProjection={offerProjection} deltaRows={deltaRows} /> : null}
+          {page === 'delta' ? <DeltaPage currentProjection={currentProjection} offerProjection={offerProjection} deltaRows={deltaRows} compView={compView} /> : null}
         </section>
       </div>
     </main>

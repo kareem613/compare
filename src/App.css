@@ -52,7 +52,7 @@ button:disabled {
 .command-bar {
   height: 58px;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto auto 1fr;
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
@@ -66,6 +66,7 @@ button:disabled {
 
 .command-bar__brand,
 .command-bar__tabs,
+.command-bar__mode,
 .command-bar__scenario,
 .control-panel,
 .summary-strip,
@@ -81,6 +82,7 @@ button:disabled {
 
 .command-bar__brand,
 .command-bar__tabs,
+.command-bar__mode,
 .command-bar__scenario {
   height: 42px;
   display: flex;
@@ -103,7 +105,10 @@ button:disabled {
 }
 
 .command-bar__tabs {
-  justify-self: center;
+  gap: 4px;
+}
+
+.command-bar__mode {
   gap: 4px;
 }
 
@@ -131,6 +136,7 @@ button:disabled {
 .command-bar__scenario {
   gap: 6px;
   padding-right: 6px;
+  justify-self: end;
 }
 
 .command-bar__scenario select,
@@ -579,6 +585,7 @@ th {
   }
 
   .command-bar__tabs,
+  .command-bar__mode,
   .command-bar__scenario {
     justify-self: start;
     width: 100%;
