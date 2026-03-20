@@ -420,6 +420,56 @@ button:disabled {
   gap: 4px;
 }
 
+.metric-card__label,
+.table-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltip-chip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--gold);
+  font-size: 0.64rem;
+  line-height: 1;
+  cursor: help;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tooltip-chip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  min-width: 160px;
+  max-width: 220px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(7, 9, 13, 0.98);
+  color: #fff0cb;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: var(--shadow);
+  transition: opacity 120ms ease;
+  z-index: 5;
+}
+
+.tooltip-chip:hover::after,
+.tooltip-chip:focus-visible::after {
+  opacity: 1;
+}
+
 .metric-card strong {
   font-size: 1.25rem;
   color: #fff0cb;

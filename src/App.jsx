@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import { calculateDelta, calculateScenario, createScenarioRecord, estimateTax, HORIZON_YEARS, REGION_OPTIONS } from './model'
+import { calculateDelta, calculateScenario, createScenarioRecord, HORIZON_YEARS, REGION_OPTIONS } from './model'
 import { deleteScenarioRecord, listScenarioRecords, saveScenarioRecord } from './scenarioStore'
 
 const PAGE_OPTIONS = ['current', 'offer', 'delta']
@@ -66,6 +66,14 @@ function sumScenarioRows(rows, compView, limit) {
   return rows.slice(0, limit).reduce((total, row) => total + scenarioValueForMode(row, compView), 0)
 }
 
+function TooltipChip({ label, tooltip }) {
+  return (
+    <span className="tooltip-chip" tabIndex={0} aria-label={`${label}: ${tooltip}`} data-tooltip={tooltip}>
+      ?
+    </span>
+  )
+}
+
 function NumberField({ label, value, suffix, step = 1, min = 0, onChange }) {
   return (
     <label className="field">
@@ -120,7 +128,10 @@ function ScenarioForm({ title, accent, settings, onChange }) {
 function MetricCard({ label, value, detail, tone = 'neutral' }) {
   return (
     <article className={`metric-card metric-card--${tone}`}>
-      <span>{label}</span>
+      <span className="metric-card__label">
+        {label}
+        {detail ? <TooltipChip label={label} tooltip={detail} /> : null}
+      </span>
       <strong>{value}</strong>
       <small>{detail}</small>
     </article>
@@ -234,7 +245,12 @@ function DataTable({ title, columns, rows, renderRow }) {
           <thead>
             <tr>
               {columns.map((column) => (
-                <th key={column}>{column}</th>
+                <th key={column.label}>
+                  <span className="table-heading">
+                    {column.label}
+                    <TooltipChip label={column.label} tooltip={column.tooltip} />
+                  </span>
+                </th>
               ))}
             </tr>
           </thead>
@@ -373,7 +389,7 @@ function SummaryStrip({ eyebrow, title, detail }) {
   )
 }
 
-function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, tableTitle, tableColumns, renderRow, compView }) {
+function DetailPage({ eyebrow, title, detail, tone, projection, rows, tableTitle, tableColumns, renderRow, compView }) {
   const yearOne = projection.rows[0]
   const selectedFiveYear = sumScenarioRows(projection.rows, compView, 5)
   const selectedTenYear = sumScenarioRows(projection.rows, compView, 10)
@@ -383,10 +399,10 @@ function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, t
       <SummaryStrip eyebrow={eyebrow} title={title} detail={detail} />
 
       <section className="metrics-grid">
-        <MetricCard label="Year 1 take-home" value={formatCompactMoney(yearOne.netWithRsu)} detail={`Effective tax ${formatPercent(taxRate)}.`} tone={tone} />
-        <MetricCard label={`5Y cumulative ${modeLabel(compView)} wealth`} value={formatCompactMoney(selectedFiveYear)} detail={`Years 1-5 in ${modeLabel(compView)} terms.`} tone="neutral" />
-        <MetricCard label={`10Y cumulative ${modeLabel(compView)} wealth`} value={formatCompactMoney(selectedTenYear)} detail={`Years 1-10 in ${modeLabel(compView)} terms.`} tone="neutral" />
-        <MetricCard label="10Y vested equity" value={formatCompactMoney(projection.totals.equity)} detail="Recognized over time." tone="neutral" />
+        <MetricCard label="Year 1 take-home" value={formatCompactMoney(yearOne.netWithRsu)} detail="Year 1 total gross minus estimated tax." tone={tone} />
+        <MetricCard label={`5Y cumulative ${modeLabel(compView)} wealth`} value={formatCompactMoney(selectedFiveYear)} detail={`Sum of years 1-5 ${modeLabel(compView)} values.`} tone="neutral" />
+        <MetricCard label={`10Y cumulative ${modeLabel(compView)} wealth`} value={formatCompactMoney(selectedTenYear)} detail={`Sum of years 1-10 ${modeLabel(compView)} values.`} tone="neutral" />
+        <MetricCard label="10Y vested equity" value={formatCompactMoney(projection.totals.equity)} detail="Sum of vested equity across 10 years." tone="neutral" />
       </section>
 
       <section className="content-grid">
@@ -410,7 +426,7 @@ function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, t
   )
 }
 
-function DeltaPage({ currentProjection, offerProjection, deltaRows, compView }) {
+function DeltaPage({ currentProjection, offerProjection, deltaRows, compView, deltaTableColumns }) {
   const fiveYearDelta = deltaCumulativeValueForMode(deltaRows[4], compView)
   const tenYearDelta = deltaCumulativeValueForMode(deltaRows.at(-1), compView)
   const yearOneTakeHomeDelta = deltaRows[0]?.netDelta ?? 0
@@ -425,10 +441,10 @@ function DeltaPage({ currentProjection, offerProjection, deltaRows, compView }) 
       />
 
       <section className="metrics-grid">
-        <MetricCard label="Year 1 take-home delta" value={formatCompactMoney(yearOneTakeHomeDelta)} detail="Immediate after-tax change." tone={yearOneTakeHomeDelta >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label={`5Y cumulative ${modeLabel(compView)} delta`} value={formatCompactMoney(fiveYearDelta)} detail={`Years 1-5 in ${modeLabel(compView)} terms.`} tone={fiveYearDelta >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label={`10Y cumulative ${modeLabel(compView)} delta`} value={formatCompactMoney(tenYearDelta)} detail={`Years 1-10 in ${modeLabel(compView)} terms.`} tone={tenYearDelta >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label="10Y equity delta" value={formatCompactMoney(equityDelta)} detail="Vested equity gap over time." tone={equityDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label="Year 1 take-home delta" value={formatCompactMoney(yearOneTakeHomeDelta)} detail="Offer year 1 take-home minus current." tone={yearOneTakeHomeDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label={`5Y cumulative ${modeLabel(compView)} delta`} value={formatCompactMoney(fiveYearDelta)} detail={`Offer minus current, summed for years 1-5 ${modeLabel(compView)}.`} tone={fiveYearDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label={`10Y cumulative ${modeLabel(compView)} delta`} value={formatCompactMoney(tenYearDelta)} detail={`Offer minus current, summed for years 1-10 ${modeLabel(compView)}.`} tone={tenYearDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label="10Y equity delta" value={formatCompactMoney(equityDelta)} detail="Offer vested equity minus current over 10 years." tone={equityDelta >= 0 ? 'positive' : 'negative'} />
       </section>
 
       <section className="content-grid">
@@ -454,7 +470,7 @@ function DeltaPage({ currentProjection, offerProjection, deltaRows, compView }) 
 
       <DataTable
         title="Delta yearly breakdown"
-        columns={['Year', 'Base Delta', 'Variable Delta', 'RSU Delta', 'Gross Delta', 'Total Gross Delta', 'Net Delta', 'Cum. Gross Delta', 'Cum. Net Delta']}
+        columns={deltaTableColumns}
         rows={deltaRows}
         renderRow={(row) => (
           <tr key={row.year}>
@@ -605,9 +621,6 @@ function App() {
     return <main className="loading-shell">Loading simulator…</main>
   }
 
-  const currentTaxRate = estimateTax(currentProjection.rows[0].totalGross, activeScenario.settings.current.regionCode).effectiveRate
-  const offerTaxRate = estimateTax(offerProjection.rows[0].totalGross, activeScenario.settings.offer.regionCode).effectiveRate
-
   const sidebarContent =
     page === 'current' ? (
       <>
@@ -624,6 +637,30 @@ function App() {
     ) : (
       <DeltaSidebar activeScenario={activeScenario} currentProjection={currentProjection} offerProjection={offerProjection} storageStatus={storageStatus} storageTone={storageTone} />
     )
+
+  const scenarioTableColumns = [
+    { label: 'Year', tooltip: 'Projection year number.' },
+    { label: 'Base', tooltip: 'Base salary for that year.' },
+    { label: 'Variable', tooltip: 'Base x target x attainment.' },
+    { label: 'RSU Grant', tooltip: 'Vested equity recognized that year.' },
+    { label: 'Gross (Base+Var)', tooltip: 'Base plus variable only.' },
+    { label: 'Total Gross', tooltip: 'Cash gross plus vested equity.' },
+    { label: 'Tax Rate', tooltip: 'Estimated tax divided by total gross.' },
+    { label: 'Net (Base+Var)', tooltip: 'Cash gross minus estimated tax on cash gross.' },
+    { label: 'Net (inc. RSU)', tooltip: 'Total gross minus estimated tax on total gross.' },
+  ]
+
+  const deltaTableColumns = [
+    { label: 'Year', tooltip: 'Projection year number.' },
+    { label: 'Base Delta', tooltip: 'Offer base minus current base.' },
+    { label: 'Variable Delta', tooltip: 'Offer variable minus current variable.' },
+    { label: 'RSU Delta', tooltip: 'Offer vested equity minus current vested equity.' },
+    { label: 'Gross Delta', tooltip: 'Offer cash gross minus current cash gross.' },
+    { label: 'Total Gross Delta', tooltip: 'Offer total gross minus current total gross.' },
+    { label: 'Net Delta', tooltip: 'Offer net incl. RSU minus current net incl. RSU.' },
+    { label: 'Cum. Gross Delta', tooltip: 'Running total of total gross deltas.' },
+    { label: 'Cum. Net Delta', tooltip: 'Running total of net deltas.' },
+  ]
 
   return (
     <main className="simulator-shell">
@@ -651,11 +688,10 @@ function App() {
               detail="A clean read of what your existing package already does over the next decade."
               tone="current"
               projection={currentProjection}
-              taxRate={currentTaxRate}
               compView={compView}
               rows={currentProjection.rows}
               tableTitle="Current role yearly breakdown"
-              tableColumns={['Year', 'Base', 'Variable', 'RSU Grant', 'Gross (Base+Var)', 'Total Gross', 'Tax Rate', 'Net (Base+Var)', 'Net (inc. RSU)']}
+              tableColumns={scenarioTableColumns}
               renderRow={(row) => (
                 <tr key={row.year}>
                   <td>Y{row.year}</td>
@@ -679,11 +715,10 @@ function App() {
               detail="The same readout structure, with only the offer assumptions swapped underneath it."
               tone="offer"
               projection={offerProjection}
-              taxRate={offerTaxRate}
               compView={compView}
               rows={offerProjection.rows}
               tableTitle="New offer yearly breakdown"
-              tableColumns={['Year', 'Base', 'Variable', 'RSU Grant', 'Gross (Base+Var)', 'Total Gross', 'Tax Rate', 'Net (Base+Var)', 'Net (inc. RSU)']}
+              tableColumns={scenarioTableColumns}
               renderRow={(row) => (
                 <tr key={row.year}>
                   <td>Y{row.year}</td>
@@ -700,7 +735,7 @@ function App() {
             />
           ) : null}
 
-          {page === 'delta' ? <DeltaPage currentProjection={currentProjection} offerProjection={offerProjection} deltaRows={deltaRows} compView={compView} /> : null}
+          {page === 'delta' ? <DeltaPage currentProjection={currentProjection} offerProjection={offerProjection} deltaRows={deltaRows} compView={compView} deltaTableColumns={deltaTableColumns} /> : null}
         </section>
       </div>
     </main>
