@@ -66,9 +66,15 @@ function sumScenarioRows(rows, compView, limit) {
   return rows.slice(0, limit).reduce((total, row) => total + scenarioValueForMode(row, compView), 0)
 }
 
-function TooltipChip({ label, tooltip }) {
+function TooltipChip({ label, tooltip, nativeOnly = false }) {
   return (
-    <span className="tooltip-chip" tabIndex={0} aria-label={`${label}: ${tooltip}`} data-tooltip={tooltip}>
+    <span
+      className={nativeOnly ? 'tooltip-chip tooltip-chip--native' : 'tooltip-chip'}
+      tabIndex={0}
+      aria-label={`${label}: ${tooltip}`}
+      data-tooltip={nativeOnly ? undefined : tooltip}
+      title={nativeOnly ? tooltip : undefined}
+    >
       ?
     </span>
   )
@@ -248,7 +254,7 @@ function DataTable({ title, columns, rows, renderRow }) {
                 <th key={column.label}>
                   <span className="table-heading">
                     {column.label}
-                    <TooltipChip label={column.label} tooltip={column.tooltip} />
+                    <TooltipChip label={column.label} tooltip={column.tooltip} nativeOnly />
                   </span>
                 </th>
               ))}

@@ -470,6 +470,10 @@ button:disabled {
   opacity: 1;
 }
 
+.tooltip-chip--native::after {
+  display: none;
+}
+
 .metric-card strong {
   font-size: 1.25rem;
   color: #fff0cb;
