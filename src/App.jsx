@@ -43,14 +43,7 @@ function NumberField({ label, value, suffix, step = 1, min = 0, onChange }) {
     <label className="field">
       <span>{label}</span>
       <div className="field__input-shell">
-        <input
-          className="field__input"
-          type="number"
-          min={min}
-          step={step}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-        />
+        <input className="field__input" type="number" min={min} step={step} value={value} onChange={(event) => onChange(event.target.value)} />
         {suffix ? <span className="field__suffix">{suffix}</span> : null}
       </div>
     </label>
@@ -74,25 +67,22 @@ function SelectField({ label, value, options, onChange }) {
 
 function ScenarioForm({ title, accent, settings, onChange }) {
   return (
-    <section className={`config-card config-card--${accent}`}>
-      <div className="config-card__header">
-        <div>
-          <p className="eyebrow">Configuration</p>
-          <h2>{title}</h2>
-        </div>
-        <p>Everything on this page recalculates instantly from these assumptions.</p>
+    <section className={`config-panel config-panel--${accent}`}>
+      <div className="panel-head">
+        <p className="eyebrow">Setup</p>
+        <h2>{title}</h2>
+        <p>Change the assumptions here. The page beside it re-runs immediately.</p>
       </div>
-
       <div className="field-grid">
-        <SelectField label="Province / region" value={settings.regionCode} options={REGION_OPTIONS} onChange={(value) => onChange('regionCode', value)} />
+        <SelectField label="Region" value={settings.regionCode} options={REGION_OPTIONS} onChange={(value) => onChange('regionCode', value)} />
         <NumberField label="Base salary" value={settings.baseSalary} suffix="CAD" step={1000} onChange={(value) => onChange('baseSalary', value)} />
         <NumberField label="Annual raise" value={settings.annualRaisePct} suffix="%" step={0.5} onChange={(value) => onChange('annualRaisePct', value)} />
         <NumberField label="Variable target" value={settings.variableTargetPct} suffix="%" step={1} onChange={(value) => onChange('variableTargetPct', value)} />
         <NumberField label="Quota attainment" value={settings.quotaAttainmentPct} suffix="%" step={1} onChange={(value) => onChange('quotaAttainmentPct', value)} />
-        <NumberField label="Initial equity grant" value={settings.initialGrantValue} suffix="CAD" step={5000} onChange={(value) => onChange('initialGrantValue', value)} />
-        <NumberField label="Vesting schedule" value={settings.vestingYears} suffix="yrs" step={1} min={1} onChange={(value) => onChange('vestingYears', value)} />
-        <NumberField label="Annual refresher" value={settings.refresherGrantValue} suffix="CAD" step={5000} onChange={(value) => onChange('refresherGrantValue', value)} />
-        <NumberField label="Refresher start year" value={settings.refresherStartYear} suffix="yr" step={1} min={2} onChange={(value) => onChange('refresherStartYear', value)} />
+        <NumberField label="Initial equity" value={settings.initialGrantValue} suffix="CAD" step={5000} onChange={(value) => onChange('initialGrantValue', value)} />
+        <NumberField label="Vesting" value={settings.vestingYears} suffix="yrs" step={1} min={1} onChange={(value) => onChange('vestingYears', value)} />
+        <NumberField label="Refresher" value={settings.refresherGrantValue} suffix="CAD" step={5000} onChange={(value) => onChange('refresherGrantValue', value)} />
+        <NumberField label="Refresh start" value={settings.refresherStartYear} suffix="yr" step={1} min={2} onChange={(value) => onChange('refresherStartYear', value)} />
         <NumberField label="Stock growth" value={settings.stockGrowthPct} suffix="%" step={0.5} onChange={(value) => onChange('stockGrowthPct', value)} />
       </div>
     </section>
@@ -102,17 +92,17 @@ function ScenarioForm({ title, accent, settings, onChange }) {
 function MetricCard({ label, value, detail, tone = 'neutral' }) {
   return (
     <article className={`metric-card metric-card--${tone}`}>
-      <p>{label}</p>
+      <span>{label}</span>
       <strong>{value}</strong>
-      <span>{detail}</span>
+      <small>{detail}</small>
     </article>
   )
 }
 
 function TrajectoryChart({ title, subtitle, rows, lines }) {
   const width = 860
-  const height = 320
-  const padding = 28
+  const height = 248
+  const padding = 20
   const points = rows.length
   const maxValue = Math.max(1, ...lines.flatMap((line) => rows.map((row, index) => Math.abs(line.value(row, index)))))
 
@@ -121,9 +111,9 @@ function TrajectoryChart({ title, subtitle, rows, lines }) {
 
   return (
     <section className="chart-card">
-      <div className="chart-card__header">
+      <div className="panel-head panel-head--inline">
         <div>
-          <p className="eyebrow">Trajectory</p>
+          <p className="eyebrow">Chart</p>
           <h3>{title}</h3>
         </div>
         <p>{subtitle}</p>
@@ -151,8 +141,8 @@ function TrajectoryChart({ title, subtitle, rows, lines }) {
           />
         ))}
         {rows.map((row, index) => (
-          <text key={row.year} x={x(index)} y={height - 6} textAnchor="middle" className="trajectory-chart__label">
-            Y{row.year}
+          <text key={row.year} x={x(index)} y={height - 4} textAnchor="middle" className="trajectory-chart__label">
+            {row.year}
           </text>
         ))}
       </svg>
@@ -173,9 +163,9 @@ function EquityStackChart({ title, subtitle, stacking }) {
 
   return (
     <section className="chart-card">
-      <div className="chart-card__header">
+      <div className="panel-head panel-head--inline">
         <div>
-          <p className="eyebrow">Equity stacking</p>
+          <p className="eyebrow">Equity</p>
           <h3>{title}</h3>
         </div>
         <p>{subtitle}</p>
@@ -188,15 +178,12 @@ function EquityStackChart({ title, subtitle, stacking }) {
                 <div
                   key={segment.id}
                   className="stack-chart__segment"
-                  style={{
-                    height: `${(segment.vested / maxTotal) * 100}%`,
-                    background: segment.color,
-                  }}
+                  style={{ height: `${(segment.vested / maxTotal) * 100}%`, background: segment.color }}
                   title={`${segment.label}: ${formatMoney(segment.vested)}`}
                 />
               ))}
             </div>
-            <span>Y{row.year}</span>
+            <span>{row.year}</span>
           </div>
         ))}
       </div>
@@ -207,12 +194,12 @@ function EquityStackChart({ title, subtitle, stacking }) {
 function DataTable({ title, columns, rows, renderRow }) {
   return (
     <section className="table-card table-card--full">
-      <div className="chart-card__header">
+      <div className="panel-head panel-head--inline">
         <div>
-          <p className="eyebrow">Yearly detail</p>
+          <p className="eyebrow">Table</p>
           <h3>{title}</h3>
         </div>
-        <p>{rows.length} yearly rows across the {HORIZON_YEARS}-year horizon.</p>
+        <p>{rows.length} yearly rows.</p>
       </div>
       <div className="table-wrap">
         <table>
@@ -230,176 +217,144 @@ function DataTable({ title, columns, rows, renderRow }) {
   )
 }
 
-function ScenarioToolbar({
-  activeScenario,
-  records,
-  onSelect,
-  onRename,
-  onCreate,
-  onDuplicate,
-  onDelete,
-}) {
-  return (
-    <div className="scenario-toolbar">
-      <div className="scenario-toolbar__group scenario-toolbar__group--grow">
-        <label className="scenario-select">
-          <span>Scenario</span>
-          <select value={activeScenario.id} onChange={(event) => onSelect(event.target.value)}>
-            {records.map((record) => (
-              <option key={record.id} value={record.id}>
-                {record.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="scenario-title-input">
-          <span>Label</span>
-          <input value={activeScenario.name} onChange={(event) => onRename(event.target.value)} />
-        </label>
-      </div>
-
-      <div className="scenario-toolbar__group">
-        <button type="button" className="toolbar-button toolbar-button--accent" onClick={onCreate} aria-label="Create scenario">
-          +
-        </button>
-        <button type="button" className="toolbar-button" onClick={onDuplicate}>
-          Duplicate
-        </button>
-        <button type="button" className="toolbar-button toolbar-button--danger" onClick={() => void onDelete()} disabled={records.length === 1}>
-          Delete
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function PageNav({ value, onChange }) {
+function CommandBar({ activeScenario, page, records, onPageChange, onSelect, onCreate, onDuplicate, onDelete }) {
   const labels = {
-    current: 'Current role',
-    offer: 'New offer',
+    current: 'Current',
+    offer: 'Offer',
     delta: 'Delta',
   }
 
   return (
-    <div className="page-nav" role="tablist" aria-label="Simulator pages">
-      {PAGE_OPTIONS.map((option) => (
-        <button
-          key={option}
-          type="button"
-          role="tab"
-          aria-selected={value === option}
-          className={value === option ? 'page-nav__button page-nav__button--active' : 'page-nav__button'}
-          onClick={() => onChange(option)}
-        >
-          {labels[option]}
+    <header className="command-bar">
+      <div className="command-bar__brand">
+        <span className="command-bar__kicker">Career Wealth Delta Simulator</span>
+      </div>
+
+      <nav className="command-bar__tabs" aria-label="Simulator pages">
+        {PAGE_OPTIONS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={page === option ? 'tab-button tab-button--active' : 'tab-button'}
+            onClick={() => onPageChange(option)}
+          >
+            {labels[option]}
+          </button>
+        ))}
+      </nav>
+
+      <div className="command-bar__scenario">
+        <select value={activeScenario.id} onChange={(event) => onSelect(event.target.value)} aria-label="Select scenario">
+          {records.map((record) => (
+            <option key={record.id} value={record.id}>
+              {record.name}
+            </option>
+          ))}
+        </select>
+        <button type="button" className="icon-button" onClick={onCreate} aria-label="Create scenario">
+          +
         </button>
-      ))}
-    </div>
+        <button type="button" className="chip-button" onClick={onDuplicate}>
+          Duplicate
+        </button>
+        <button type="button" className="icon-button icon-button--danger" onClick={() => void onDelete()} disabled={records.length === 1} aria-label="Delete scenario">
+          -
+        </button>
+      </div>
+    </header>
+  )
+}
+
+function SidebarMeta({ activeScenario, storageStatus, storageTone }) {
+  return (
+    <section className="meta-panel">
+      <div>
+        <p className="eyebrow">Scenario</p>
+        <h2>{activeScenario.name}</h2>
+      </div>
+      <div className="meta-panel__info">
+        <span>Updated {formatScenarioUpdated(activeScenario.updatedAt)}</span>
+        <span className={`status-inline status-inline--${storageTone}`}>{storageStatus}</span>
+      </div>
+    </section>
   )
 }
 
 function TransparencyCard() {
   return (
-    <section className="assumption-card">
-      <p className="eyebrow">Assumptions</p>
-      <h2>How to read the model</h2>
+    <section className="meta-panel meta-panel--notes">
+      <p className="eyebrow">Model notes</p>
       <ul>
-        <li>Taxes use progressive federal and provincial income tax bands with basic personal amounts.</li>
-        <li>CPP, EI, retirement deductions, and credits beyond the BPA are intentionally excluded.</li>
-        <li>Equity represents vested value recognized as income in the year it lands.</li>
-        <li>Your scenario data is saved locally only; every projection is recalculated live from those settings.</li>
+        <li>Progressive federal and provincial tax bands with basic personal amounts.</li>
+        <li>CPP, EI, and extra deductions are excluded for clarity.</li>
+        <li>Scenario data is saved locally only.</li>
       </ul>
     </section>
   )
 }
 
-function ScenarioSummaryCard({ activeScenario }) {
-  return (
-    <section className="assumption-card assumption-card--compact">
-      <p className="eyebrow">Scenario</p>
-      <h2>{activeScenario.name}</h2>
-      <ul>
-        <li>Last updated {formatScenarioUpdated(activeScenario.updatedAt)}.</li>
-        <li>Use the page tabs to focus on current role, new offer, or delta.</li>
-        <li>The header keeps scenario switching compact so the sidebar can stay dedicated to assumptions.</li>
-      </ul>
-    </section>
-  )
-}
-
-function DeltaSidebar({ activeScenario, currentProjection, offerProjection }) {
+function DeltaSidebar({ activeScenario, currentProjection, offerProjection, storageStatus, storageTone }) {
   return (
     <>
-      <ScenarioSummaryCard activeScenario={activeScenario} />
-      <section className="assumption-card assumption-card--compact">
-        <p className="eyebrow">Compare setup</p>
-        <h2>Inputs in play</h2>
+      <SidebarMeta activeScenario={activeScenario} storageStatus={storageStatus} storageTone={storageTone} />
+      <section className="meta-panel meta-panel--notes">
+        <p className="eyebrow">Inputs in play</p>
         <div className="compare-notes">
           <div>
-            <span>Current role</span>
+            <span>Current</span>
             <strong>{currentProjection.region.label}</strong>
             <em>{formatMoney(activeScenario.settings.current.baseSalary)} base</em>
           </div>
           <div>
-            <span>New offer</span>
+            <span>Offer</span>
             <strong>{offerProjection.region.label}</strong>
             <em>{formatMoney(activeScenario.settings.offer.baseSalary)} base</em>
           </div>
         </div>
-        <p className="sidebar-note">Adjust assumptions from the Current role and New offer pages, then come back here to read the spread.</p>
+        <p className="side-note">Adjust assumptions from the Current or Offer page, then return here to inspect the spread.</p>
       </section>
       <TransparencyCard />
     </>
   )
 }
 
-function DetailPage({
-  eyebrow,
-  title,
-  lead,
-  tone,
-  projection,
-  taxRate,
-  rows,
-  tableTitle,
-  tableColumns,
-  renderRow,
-}) {
+function SummaryStrip({ eyebrow, title, detail }) {
+  return (
+    <section className="summary-strip">
+      <div>
+        <p className="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
+      </div>
+      <p>{detail}</p>
+    </section>
+  )
+}
+
+function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, tableTitle, tableColumns, renderRow }) {
   const yearOne = projection.rows[0]
-  const yearTen = projection.rows.at(-1)
 
   return (
     <>
-      <header className={`hero-panel hero-panel--${tone}`}>
-        <div>
-          <p className="eyebrow">{eyebrow}</p>
-          <h1>{title}</h1>
-        </div>
-        <p>{lead}</p>
-      </header>
+      <SummaryStrip eyebrow={eyebrow} title={title} detail={detail} />
 
       <section className="metrics-grid">
-        <MetricCard label="10Y gross" value={formatCompactMoney(projection.totals.gross)} detail="Cash plus vested equity across the full horizon." tone={tone} />
-        <MetricCard label="10Y net" value={formatCompactMoney(projection.totals.net)} detail="After progressive income tax estimation." tone={tone} />
-        <MetricCard label="Year 1 take-home" value={formatCompactMoney(yearOne.netWithRsu)} detail={`Estimated first-year effective tax ${formatPercent(taxRate)}.`} tone="neutral" />
-        <MetricCard label="10Y vested equity" value={formatCompactMoney(projection.totals.equity)} detail="Equity recognized as income over time." tone="neutral" />
+        <MetricCard label="10Y gross" value={formatCompactMoney(projection.totals.gross)} detail="Cash plus vested equity." tone={tone} />
+        <MetricCard label="10Y net" value={formatCompactMoney(projection.totals.net)} detail="After estimated tax." tone={tone} />
+        <MetricCard label="Year 1 take-home" value={formatCompactMoney(yearOne.netWithRsu)} detail={`Effective tax ${formatPercent(taxRate)}.`} tone="neutral" />
+        <MetricCard label="10Y vested equity" value={formatCompactMoney(projection.totals.equity)} detail="Recognized over time." tone="neutral" />
       </section>
 
       <section className="content-grid">
         <TrajectoryChart
-          title={`${title} income path`}
+          title={`${eyebrow} income path`}
           subtitle={`Gross and net compensation over ${HORIZON_YEARS} years in ${projection.region.label}.`}
           rows={projection.rows}
           lines={[
-            { label: 'Gross incl. RSU', color: tone === 'current' ? '#ffdf8c' : '#5ce1e6', value: (row) => row.totalGross },
-            { label: 'Net incl. RSU', color: tone === 'current' ? '#ff9d82' : '#f27dbb', value: (row) => row.netWithRsu },
+            { label: 'Gross incl. RSU', color: tone === 'current' ? '#e6c470' : '#58d0d6', value: (row) => row.totalGross },
+            { label: 'Net incl. RSU', color: tone === 'current' ? '#ff9d82' : '#ee89be', value: (row) => row.netWithRsu },
           ]}
         />
-        <EquityStackChart
-          title={`${title} vested equity`}
-          subtitle={`The equity stack by grant vintage, from year 1 through year ${yearTen.year}.`}
-          stacking={projection.stacking}
-        />
+        <EquityStackChart title={`${eyebrow} vested equity`} subtitle="Stacked by grant vintage." stacking={projection.stacking} />
       </section>
 
       <DataTable title={tableTitle} columns={tableColumns} rows={rows} renderRow={renderRow} />
@@ -415,39 +370,37 @@ function DeltaPage({ currentProjection, offerProjection, deltaRows }) {
 
   return (
     <>
-      <header className="hero-panel hero-panel--delta">
-        <div>
-          <p className="eyebrow">Decision spread</p>
-          <h1>Delta isolates what actually changes when you take the offer.</h1>
-        </div>
-        <p>Read the compensation gap directly: cash mix, equity lift, tax drag, and how much of the headline package survives into your take-home over the next decade.</p>
-      </header>
+      <SummaryStrip
+        eyebrow="Delta"
+        title="The spread between staying and jumping."
+        detail="Read the gap directly: cash mix, equity lift, tax drag, and the cumulative value that actually survives into take-home."
+      />
 
       <section className="metrics-grid">
-        <MetricCard label="10Y gross delta" value={formatCompactMoney(cumulativeGross)} detail="Offer minus current, including vested equity." tone={cumulativeGross >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label="10Y net delta" value={formatCompactMoney(cumulativeNet)} detail="After tax, after vesting, across the whole horizon." tone={cumulativeNet >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label="Year 1 net delta" value={formatCompactMoney(yearOneDelta)} detail="Immediate annualized take-home impact." tone={yearOneDelta >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label="Year 10 net delta" value={formatCompactMoney(yearTenDelta)} detail="Where the model finishes once raises and refreshers stack." tone={yearTenDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label="10Y gross delta" value={formatCompactMoney(cumulativeGross)} detail="Offer minus current." tone={cumulativeGross >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label="10Y net delta" value={formatCompactMoney(cumulativeNet)} detail="After tax and vesting." tone={cumulativeNet >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label="Year 1 net delta" value={formatCompactMoney(yearOneDelta)} detail="Immediate take-home change." tone={yearOneDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label="Year 10 net delta" value={formatCompactMoney(yearTenDelta)} detail="Where the model finishes." tone={yearTenDelta >= 0 ? 'positive' : 'negative'} />
       </section>
 
       <section className="content-grid">
         <TrajectoryChart
           title="Delta trajectory"
-          subtitle="Positive years favor the offer. Negative years expose dilution, weaker cash mix, or vesting cliffs."
+          subtitle="Positive years favor the offer. Negative years expose dilution or weaker cash mix."
           rows={deltaRows}
           lines={[
-            { label: 'Gross delta', color: '#ffdf8c', value: (row) => row.totalGrossDelta },
-            { label: 'Net delta', color: '#5ce1e6', value: (row) => row.netDelta },
-            { label: 'Cumulative net delta', color: '#f27dbb', value: (row) => row.cumulativeNetDelta },
+            { label: 'Gross delta', color: '#e6c470', value: (row) => row.totalGrossDelta },
+            { label: 'Net delta', color: '#58d0d6', value: (row) => row.netDelta },
+            { label: 'Cumulative net delta', color: '#ee89be', value: (row) => row.cumulativeNetDelta },
           ]}
         />
         <TrajectoryChart
           title="Current vs offer take-home"
-          subtitle="A direct net-income overlay so the decision reads at a glance."
+          subtitle="A direct overlay of the two net-income paths."
           rows={currentProjection.rows}
           lines={[
-            { label: 'Current net', color: '#ffdf8c', value: (_, index) => currentProjection.rows[index].netWithRsu },
-            { label: 'Offer net', color: '#5ce1e6', value: (_, index) => offerProjection.rows[index].netWithRsu },
+            { label: 'Current net', color: '#e6c470', value: (_, index) => currentProjection.rows[index].netWithRsu },
+            { label: 'Offer net', color: '#58d0d6', value: (_, index) => offerProjection.rows[index].netWithRsu },
           ]}
         />
       </section>
@@ -496,7 +449,7 @@ function App() {
         if (!cancelled) {
           setRecords(seeded)
           setActiveScenarioId(seeded[0].id)
-          setStorageStatus('Scenario data is saved locally only.')
+          setStorageStatus('Saved locally only')
           setStorageTone('success')
         }
       } catch (error) {
@@ -535,7 +488,7 @@ function App() {
     [currentProjection, offerProjection],
   )
 
-  const saveRecord = async (record, nextStatus = 'Scenario saved locally.') => {
+  const saveRecord = async (record, nextStatus = 'Saved locally only') => {
     try {
       await saveScenarioRecord(record)
       setStorageStatus(nextStatus)
@@ -555,11 +508,7 @@ function App() {
         ...activeScenario.settings,
         [section]: {
           ...activeScenario.settings[section],
-          [key]: key === 'regionCode'
-            ? rawValue
-            : rawValue === ''
-              ? ''
-              : Number(rawValue),
+          [key]: key === 'regionCode' ? rawValue : rawValue === '' ? '' : Number(rawValue),
         },
       },
     }
@@ -568,23 +517,11 @@ function App() {
     void saveRecord(nextRecord)
   }
 
-  const renameScenario = (name) => {
-    if (!activeScenario) return
-    const trimmed = name.trimStart()
-    const nextRecord = {
-      ...activeScenario,
-      name: trimmed || activeScenario.name,
-      updatedAt: new Date().toISOString(),
-    }
-    setRecords((current) => current.map((record) => (record.id === nextRecord.id ? nextRecord : record)))
-    void saveRecord(nextRecord, 'Scenario label updated locally.')
-  }
-
   const addScenario = () => {
     const nextRecord = createScenarioRecord(`Scenario ${records.length + 1}`)
     setRecords((current) => [nextRecord, ...current])
     setActiveScenarioId(nextRecord.id)
-    void saveRecord(nextRecord, 'New scenario created locally.')
+    void saveRecord(nextRecord, 'New scenario saved locally')
   }
 
   const duplicateScenario = () => {
@@ -597,7 +534,7 @@ function App() {
     }
     setRecords((current) => [nextRecord, ...current])
     setActiveScenarioId(nextRecord.id)
-    void saveRecord(nextRecord, 'Scenario duplicated locally.')
+    void saveRecord(nextRecord, 'Duplicate saved locally')
   }
 
   const removeScenario = async () => {
@@ -608,7 +545,7 @@ function App() {
 
     try {
       await deleteScenarioRecord(activeScenario.id)
-      setStorageStatus('Scenario removed from local storage.')
+      setStorageStatus('Scenario removed')
       setStorageTone('success')
     } catch (error) {
       setStorageStatus(`Delete failed: ${error instanceof Error ? error.message : String(error)}`)
@@ -626,106 +563,94 @@ function App() {
   const sidebarContent =
     page === 'current' ? (
       <>
-        <ScenarioSummaryCard activeScenario={activeScenario} />
-        <ScenarioForm title="Current role setup" accent="current" settings={activeScenario.settings.current} onChange={(key, value) => updateScenario('current', key, value)} />
+        <SidebarMeta activeScenario={activeScenario} storageStatus={storageStatus} storageTone={storageTone} />
+        <ScenarioForm title="Current role" accent="current" settings={activeScenario.settings.current} onChange={(key, value) => updateScenario('current', key, value)} />
         <TransparencyCard />
       </>
     ) : page === 'offer' ? (
       <>
-        <ScenarioSummaryCard activeScenario={activeScenario} />
-        <ScenarioForm title="New offer setup" accent="offer" settings={activeScenario.settings.offer} onChange={(key, value) => updateScenario('offer', key, value)} />
+        <SidebarMeta activeScenario={activeScenario} storageStatus={storageStatus} storageTone={storageTone} />
+        <ScenarioForm title="New offer" accent="offer" settings={activeScenario.settings.offer} onChange={(key, value) => updateScenario('offer', key, value)} />
         <TransparencyCard />
       </>
     ) : (
-      <DeltaSidebar activeScenario={activeScenario} currentProjection={currentProjection} offerProjection={offerProjection} />
+      <DeltaSidebar activeScenario={activeScenario} currentProjection={currentProjection} offerProjection={offerProjection} storageStatus={storageStatus} storageTone={storageTone} />
     )
 
   return (
     <main className="simulator-shell">
-      <aside className="control-panel">
-        <div className="control-panel__header">
-          <p className="eyebrow">Career Wealth Delta Simulator</p>
-          <h2>Configure the assumptions, then read the result on the canvas.</h2>
-          <p className={`status-chip status-chip--${storageTone}`}>{storageStatus}</p>
-        </div>
-        {sidebarContent}
-      </aside>
+      <CommandBar
+        activeScenario={activeScenario}
+        page={page}
+        records={records}
+        onPageChange={setPage}
+        onSelect={setActiveScenarioId}
+        onCreate={addScenario}
+        onDuplicate={duplicateScenario}
+        onDelete={removeScenario}
+      />
 
-      <section className="workspace">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Decision studio</p>
-            <h2>Scenario-driven offer comparison for the next decade.</h2>
-          </div>
-          <ScenarioToolbar
-            activeScenario={activeScenario}
-            records={records}
-            onSelect={setActiveScenarioId}
-            onRename={renameScenario}
-            onCreate={addScenario}
-            onDuplicate={duplicateScenario}
-            onDelete={removeScenario}
-          />
-        </header>
+      <div className="simulator-body">
+        <aside className="control-panel">{sidebarContent}</aside>
 
-        <PageNav value={page} onChange={setPage} />
+        <section className="workspace">
+          {page === 'current' ? (
+            <DetailPage
+              eyebrow="Current role"
+              title="Current role baseline"
+              detail="A clean read of what your existing package already does over the next decade."
+              tone="current"
+              projection={currentProjection}
+              taxRate={currentTaxRate}
+              rows={currentProjection.rows}
+              tableTitle="Current role yearly breakdown"
+              tableColumns={['Year', 'Base', 'Variable', 'RSU Grant', 'Gross (Base+Var)', 'Total Gross', 'Tax Rate', 'Net (Base+Var)', 'Net (inc. RSU)']}
+              renderRow={(row) => (
+                <tr key={row.year}>
+                  <td>Y{row.year}</td>
+                  <td>{formatMoney(row.base)}</td>
+                  <td>{formatMoney(row.variable)}</td>
+                  <td>{formatMoney(row.rsuGrant)}</td>
+                  <td>{formatMoney(row.gross)}</td>
+                  <td>{formatMoney(row.totalGross)}</td>
+                  <td>{formatPercent(row.taxRate)}</td>
+                  <td>{formatMoney(row.net)}</td>
+                  <td>{formatMoney(row.netWithRsu)}</td>
+                </tr>
+              )}
+            />
+          ) : null}
 
-        {page === 'current' ? (
-          <DetailPage
-            eyebrow="Current role"
-            title="Current role keeps the baseline honest."
-            lead="This page isolates what your existing compensation stack already does on its own: cash flow, tax drag, and how much vested equity actually lands over time."
-            tone="current"
-            projection={currentProjection}
-            taxRate={currentTaxRate}
-            rows={currentProjection.rows}
-            tableTitle="Current role yearly breakdown"
-            tableColumns={['Year', 'Base', 'Variable', 'RSU Grant', 'Gross (Base+Var)', 'Total Gross', 'Tax Rate', 'Net (Base+Var)', 'Net (inc. RSU)']}
-            renderRow={(row) => (
-              <tr key={row.year}>
-                <td>Y{row.year}</td>
-                <td>{formatMoney(row.base)}</td>
-                <td>{formatMoney(row.variable)}</td>
-                <td>{formatMoney(row.rsuGrant)}</td>
-                <td>{formatMoney(row.gross)}</td>
-                <td>{formatMoney(row.totalGross)}</td>
-                <td>{formatPercent(row.taxRate)}</td>
-                <td>{formatMoney(row.net)}</td>
-                <td>{formatMoney(row.netWithRsu)}</td>
-              </tr>
-            )}
-          />
-        ) : null}
+          {page === 'offer' ? (
+            <DetailPage
+              eyebrow="New offer"
+              title="New offer package"
+              detail="The same readout structure, with only the offer assumptions swapped underneath it."
+              tone="offer"
+              projection={offerProjection}
+              taxRate={offerTaxRate}
+              rows={offerProjection.rows}
+              tableTitle="New offer yearly breakdown"
+              tableColumns={['Year', 'Base', 'Variable', 'RSU Grant', 'Gross (Base+Var)', 'Total Gross', 'Tax Rate', 'Net (Base+Var)', 'Net (inc. RSU)']}
+              renderRow={(row) => (
+                <tr key={row.year}>
+                  <td>Y{row.year}</td>
+                  <td>{formatMoney(row.base)}</td>
+                  <td>{formatMoney(row.variable)}</td>
+                  <td>{formatMoney(row.rsuGrant)}</td>
+                  <td>{formatMoney(row.gross)}</td>
+                  <td>{formatMoney(row.totalGross)}</td>
+                  <td>{formatPercent(row.taxRate)}</td>
+                  <td>{formatMoney(row.net)}</td>
+                  <td>{formatMoney(row.netWithRsu)}</td>
+                </tr>
+              )}
+            />
+          ) : null}
 
-        {page === 'offer' ? (
-          <DetailPage
-            eyebrow="New offer"
-            title="New offer gets its own clean read, not a blended compromise."
-            lead="Use the same structure as the baseline page, but with the new package assumptions driving every chart, stat, and table on the screen."
-            tone="offer"
-            projection={offerProjection}
-            taxRate={offerTaxRate}
-            rows={offerProjection.rows}
-            tableTitle="New offer yearly breakdown"
-            tableColumns={['Year', 'Base', 'Variable', 'RSU Grant', 'Gross (Base+Var)', 'Total Gross', 'Tax Rate', 'Net (Base+Var)', 'Net (inc. RSU)']}
-            renderRow={(row) => (
-              <tr key={row.year}>
-                <td>Y{row.year}</td>
-                <td>{formatMoney(row.base)}</td>
-                <td>{formatMoney(row.variable)}</td>
-                <td>{formatMoney(row.rsuGrant)}</td>
-                <td>{formatMoney(row.gross)}</td>
-                <td>{formatMoney(row.totalGross)}</td>
-                <td>{formatPercent(row.taxRate)}</td>
-                <td>{formatMoney(row.net)}</td>
-                <td>{formatMoney(row.netWithRsu)}</td>
-              </tr>
-            )}
-          />
-        ) : null}
-
-        {page === 'delta' ? <DeltaPage currentProjection={currentProjection} offerProjection={offerProjection} deltaRows={deltaRows} /> : null}
-      </section>
+          {page === 'delta' ? <DeltaPage currentProjection={currentProjection} offerProjection={offerProjection} deltaRows={deltaRows} /> : null}
+        </section>
+      </div>
     </main>
   )
 }
