@@ -62,6 +62,10 @@ function deltaCumulativeValueForMode(row, compView) {
   return compView === 'gross' ? row.cumulativeGrossDelta : row.cumulativeNetDelta
 }
 
+function sumScenarioRows(rows, compView, limit) {
+  return rows.slice(0, limit).reduce((total, row) => total + scenarioValueForMode(row, compView), 0)
+}
+
 function NumberField({ label, value, suffix, step = 1, min = 0, onChange }) {
   return (
     <label className="field">
@@ -371,19 +375,17 @@ function SummaryStrip({ eyebrow, title, detail }) {
 
 function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, tableTitle, tableColumns, renderRow, compView }) {
   const yearOne = projection.rows[0]
-  const yearTen = projection.rows.at(-1)
-  const selectedTotal = compView === 'gross' ? projection.totals.gross : projection.totals.net
-  const selectedYearOne = scenarioValueForMode(yearOne, compView)
-  const selectedYearTen = scenarioValueForMode(yearTen, compView)
+  const selectedFiveYear = sumScenarioRows(projection.rows, compView, 5)
+  const selectedTenYear = sumScenarioRows(projection.rows, compView, 10)
 
   return (
     <>
       <SummaryStrip eyebrow={eyebrow} title={title} detail={detail} />
 
       <section className="metrics-grid">
-        <MetricCard label={`10Y ${modeLabel(compView)}`} value={formatCompactMoney(selectedTotal)} detail={compView === 'gross' ? 'Cash plus vested equity.' : 'After estimated tax.'} tone={tone} />
-        <MetricCard label={`Year 1 ${modeLabel(compView)}`} value={formatCompactMoney(selectedYearOne)} detail={compView === 'gross' ? 'Opening-year compensation.' : `Effective tax ${formatPercent(taxRate)}.`} tone="neutral" />
-        <MetricCard label={`Year 10 ${modeLabel(compView)}`} value={formatCompactMoney(selectedYearTen)} detail="How the model exits the horizon." tone="neutral" />
+        <MetricCard label="Year 1 take-home" value={formatCompactMoney(yearOne.netWithRsu)} detail={`Effective tax ${formatPercent(taxRate)}.`} tone={tone} />
+        <MetricCard label={`5Y cumulative ${modeLabel(compView)} wealth`} value={formatCompactMoney(selectedFiveYear)} detail={`Years 1-5 in ${modeLabel(compView)} terms.`} tone="neutral" />
+        <MetricCard label={`10Y cumulative ${modeLabel(compView)} wealth`} value={formatCompactMoney(selectedTenYear)} detail={`Years 1-10 in ${modeLabel(compView)} terms.`} tone="neutral" />
         <MetricCard label="10Y vested equity" value={formatCompactMoney(projection.totals.equity)} detail="Recognized over time." tone="neutral" />
       </section>
 
@@ -409,9 +411,9 @@ function DetailPage({ eyebrow, title, detail, tone, projection, taxRate, rows, t
 }
 
 function DeltaPage({ currentProjection, offerProjection, deltaRows, compView }) {
-  const cumulativeModeDelta = deltaCumulativeValueForMode(deltaRows.at(-1), compView) ?? 0
-  const yearOneDelta = deltaValueForMode(deltaRows[0], compView) ?? 0
-  const yearTenDelta = deltaValueForMode(deltaRows.at(-1), compView) ?? 0
+  const fiveYearDelta = deltaCumulativeValueForMode(deltaRows[4], compView)
+  const tenYearDelta = deltaCumulativeValueForMode(deltaRows.at(-1), compView)
+  const yearOneTakeHomeDelta = deltaRows[0]?.netDelta ?? 0
   const equityDelta = offerProjection.totals.equity - currentProjection.totals.equity
 
   return (
@@ -423,9 +425,9 @@ function DeltaPage({ currentProjection, offerProjection, deltaRows, compView }) 
       />
 
       <section className="metrics-grid">
-        <MetricCard label={`10Y ${modeLabel(compView)} delta`} value={formatCompactMoney(cumulativeModeDelta)} detail="Offer minus current." tone={cumulativeModeDelta >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label={`Year 1 ${modeLabel(compView)} delta`} value={formatCompactMoney(yearOneDelta)} detail="Immediate change." tone={yearOneDelta >= 0 ? 'positive' : 'negative'} />
-        <MetricCard label={`Year 10 ${modeLabel(compView)} delta`} value={formatCompactMoney(yearTenDelta)} detail="Where the model finishes." tone={yearTenDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label="Year 1 take-home delta" value={formatCompactMoney(yearOneTakeHomeDelta)} detail="Immediate after-tax change." tone={yearOneTakeHomeDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label={`5Y cumulative ${modeLabel(compView)} delta`} value={formatCompactMoney(fiveYearDelta)} detail={`Years 1-5 in ${modeLabel(compView)} terms.`} tone={fiveYearDelta >= 0 ? 'positive' : 'negative'} />
+        <MetricCard label={`10Y cumulative ${modeLabel(compView)} delta`} value={formatCompactMoney(tenYearDelta)} detail={`Years 1-10 in ${modeLabel(compView)} terms.`} tone={tenYearDelta >= 0 ? 'positive' : 'negative'} />
         <MetricCard label="10Y equity delta" value={formatCompactMoney(equityDelta)} detail="Vested equity gap over time." tone={equityDelta >= 0 ? 'positive' : 'negative'} />
       </section>
 
