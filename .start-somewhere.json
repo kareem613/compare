@@ -1,0 +1,38 @@
+{
+  "ssw": {
+    "api_key": "rf_compare_7e70780cf3aefb15a497a90505f96362f0480be5bb5613cf",
+    "project_id": "compare"
+  },
+  "api_base": "https://lmwbdzgnleuvjacamnwl.supabase.co",
+  "vercel": {
+    "project_name": "compare",
+    "deploy_timeout_seconds": 900,
+    "deploy_poll_seconds": 10
+  },
+  "cli": {
+    "active_profile": "copilot",
+    "profiles": {
+      "copilot": {
+        "tool_name": "copilot",
+        "extra_args": [
+          "--yolo",
+          "--autopilot",
+          "--continue"
+        ],
+        "agent_name": "copilot-cli"
+      },
+      "claude": {
+        "tool_name": "claude",
+        "extra_args": [
+          "--dangerously-skip-permissions"
+        ],
+        "agent_name": "claude-cli"
+      }
+    }
+  },
+  "iteration_defaults": {
+    "max_iterations": 0,
+    "poll_interval_seconds": 5,
+    "wait_timeout_seconds": 300
+  }
+}
