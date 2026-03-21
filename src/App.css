@@ -414,6 +414,10 @@ button:disabled {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.metrics-grid--detail {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .metric-card {
   padding: 10px 12px;
   display: grid;

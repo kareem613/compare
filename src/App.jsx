@@ -62,8 +62,18 @@ function deltaCumulativeValueForMode(row, compView) {
   return compView === 'gross' ? row.cumulativeGrossDelta : row.cumulativeNetDelta
 }
 
-function sumScenarioRows(rows, compView, limit) {
-  return rows.slice(0, limit).reduce((total, row) => total + scenarioValueForMode(row, compView), 0)
+function sumRows(rows, valueForRow, limit) {
+  return rows.slice(0, limit).reduce((total, row) => total + valueForRow(row), 0)
+}
+
+function cumulativeCompLabel(years, compView) {
+  return compView === 'gross' ? `${years}Y cumulative gross comp` : `${years}Y cumulative net income`
+}
+
+function cumulativeCompDetail(years, compView) {
+  return compView === 'gross'
+    ? `Sum of years 1-${years} gross compensation, including vested equity.`
+    : `Sum of years 1-${years} after-tax income, including vested equity.`
 }
 
 function TooltipChip({ label, tooltip, nativeOnly = false }) {
@@ -398,17 +408,21 @@ function SummaryStrip({ eyebrow, title, detail }) {
 
 function DetailPage({ eyebrow, title, detail, tone, projection, rows, tableTitle, tableColumns, renderRow, compView }) {
   const yearOne = projection.rows[0]
-  const selectedFiveYear = sumScenarioRows(projection.rows, compView, 5)
-  const selectedTenYear = sumScenarioRows(projection.rows, compView, 10)
+  const selectedFiveYear = sumRows(projection.rows, (row) => scenarioValueForMode(row, compView), 5)
+  const selectedTenYear = sumRows(projection.rows, (row) => scenarioValueForMode(row, compView), 10)
+  const savingsFiveYear = sumRows(projection.rows, (row) => row.savings, 5)
+  const savingsTenYear = sumRows(projection.rows, (row) => row.savings, 10)
 
   return (
     <>
       <SummaryStrip eyebrow={eyebrow} title={title} detail={detail} />
 
-      <section className="metrics-grid">
+      <section className="metrics-grid metrics-grid--detail">
         <MetricCard label="Year 1 take-home" value={formatCompactMoney(yearOne.netWithRsu)} detail="Year 1 total gross minus estimated tax." tone={tone} />
-        <MetricCard label={`5Y cumulative ${modeLabel(compView)} wealth`} value={formatCompactMoney(selectedFiveYear)} detail={`Sum of years 1-5 ${modeLabel(compView)} values.`} tone="neutral" />
-        <MetricCard label={`10Y cumulative ${modeLabel(compView)} wealth`} value={formatCompactMoney(selectedTenYear)} detail={`Sum of years 1-10 ${modeLabel(compView)} values.`} tone="neutral" />
+        <MetricCard label={cumulativeCompLabel(5, compView)} value={formatCompactMoney(selectedFiveYear)} detail={cumulativeCompDetail(5, compView)} tone="neutral" />
+        <MetricCard label="5Y savings" value={formatCompactMoney(savingsFiveYear)} detail="Sum of years 1-5 savings after spending." tone="neutral" />
+        <MetricCard label={cumulativeCompLabel(10, compView)} value={formatCompactMoney(selectedTenYear)} detail={cumulativeCompDetail(10, compView)} tone="neutral" />
+        <MetricCard label="10Y savings" value={formatCompactMoney(savingsTenYear)} detail="Sum of years 1-10 savings after spending." tone="neutral" />
         <MetricCard label="10Y vested equity" value={formatCompactMoney(projection.totals.equity)} detail="Sum of vested equity across 10 years." tone="neutral" />
       </section>
 
