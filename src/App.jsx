@@ -76,6 +76,16 @@ function cumulativeCompDetail(years, compView) {
     : `Sum of years 1-${years} after-tax income, including vested equity.`
 }
 
+function yearOneCompLabel(compView) {
+  return compView === 'gross' ? 'Year 1 gross comp' : 'Year 1 take-home'
+}
+
+function yearOneCompDetail(compView) {
+  return compView === 'gross'
+    ? 'Year 1 total gross compensation, including vested equity.'
+    : 'Year 1 total gross minus estimated tax.'
+}
+
 function TooltipChip({ label, tooltip, nativeOnly = false }) {
   return (
     <span
@@ -418,7 +428,12 @@ function DetailPage({ eyebrow, title, detail, tone, projection, rows, tableTitle
       <SummaryStrip eyebrow={eyebrow} title={title} detail={detail} />
 
       <section className="metrics-grid metrics-grid--detail">
-        <MetricCard label="Year 1 take-home" value={formatCompactMoney(yearOne.netWithRsu)} detail="Year 1 total gross minus estimated tax." tone={tone} />
+        <MetricCard
+          label={yearOneCompLabel(compView)}
+          value={formatCompactMoney(scenarioValueForMode(yearOne, compView))}
+          detail={yearOneCompDetail(compView)}
+          tone={tone}
+        />
         <MetricCard label={cumulativeCompLabel(5, compView)} value={formatCompactMoney(selectedFiveYear)} detail={cumulativeCompDetail(5, compView)} tone="neutral" />
         <MetricCard label="5Y savings" value={formatCompactMoney(savingsFiveYear)} detail="Sum of years 1-5 savings after spending." tone="neutral" />
         <MetricCard label={cumulativeCompLabel(10, compView)} value={formatCompactMoney(selectedTenYear)} detail={cumulativeCompDetail(10, compView)} tone="neutral" />
