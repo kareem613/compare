@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import { calculateDelta, calculateScenario, createScenarioRecord, HORIZON_YEARS, REGION_OPTIONS } from './model'
+import { calculateDelta, calculateScenario, createScenarioRecord, HORIZON_YEARS, normalizeScenarioRecord, REGION_OPTIONS } from './model'
 import { deleteScenarioRecord, listScenarioRecords, saveScenarioRecord } from './scenarioStore'
 
 const PAGE_OPTIONS = ['current', 'offer', 'delta']
@@ -118,6 +118,7 @@ function ScenarioForm({ title, accent, settings, onChange }) {
       <div className="field-grid">
         <SelectField label="Region" value={settings.regionCode} options={REGION_OPTIONS} onChange={(value) => onChange('regionCode', value)} />
         <NumberField label="Base salary" value={settings.baseSalary} suffix="CAD" step={1000} onChange={(value) => onChange('baseSalary', value)} />
+        <NumberField label="Monthly spend" value={settings.monthlySpend} suffix="CAD" step={100} onChange={(value) => onChange('monthlySpend', value)} />
         <NumberField label="Annual raise" value={settings.annualRaisePct} suffix="%" step={0.5} onChange={(value) => onChange('annualRaisePct', value)} />
         <NumberField label="Variable target" value={settings.variableTargetPct} suffix="%" step={1} onChange={(value) => onChange('variableTargetPct', value)} />
         <NumberField label="Quota attainment" value={settings.quotaAttainmentPct} suffix="%" step={1} onChange={(value) => onChange('quotaAttainmentPct', value)} />
@@ -487,8 +488,10 @@ function DeltaPage({ currentProjection, offerProjection, deltaRows, compView, de
             <td>{formatMoney(row.grossDelta)}</td>
             <td>{formatMoney(row.totalGrossDelta)}</td>
             <td>{formatMoney(row.netDelta)}</td>
+            <td>{formatMoney(row.savingsDelta)}</td>
             <td>{formatMoney(row.cumulativeGrossDelta)}</td>
             <td>{formatMoney(row.cumulativeNetDelta)}</td>
+            <td>{formatMoney(row.cumulativeSavingsDelta)}</td>
           </tr>
         )}
       />
@@ -510,7 +513,8 @@ function App() {
     async function load() {
       try {
         const saved = await listScenarioRecords()
-        const seeded = saved.length > 0 ? saved : [createScenarioRecord('Base case')]
+        const normalizedSaved = saved.map((record) => normalizeScenarioRecord(record))
+        const seeded = normalizedSaved.length > 0 ? normalizedSaved : [createScenarioRecord('Base case')]
 
         if (saved.length === 0) {
           await saveScenarioRecord(seeded[0])
@@ -654,6 +658,7 @@ function App() {
     { label: 'Tax Rate', tooltip: 'Estimated tax divided by total gross.' },
     { label: 'Net (Base+Var)', tooltip: 'Cash gross minus estimated tax on cash gross.' },
     { label: 'Net (inc. RSU)', tooltip: 'Total gross minus estimated tax on total gross.' },
+    { label: 'Savings', tooltip: 'Net incl. RSU minus annualized monthly spend.' },
   ]
 
   const deltaTableColumns = [
@@ -664,8 +669,10 @@ function App() {
     { label: 'Gross Delta', tooltip: 'Offer cash gross minus current cash gross.' },
     { label: 'Total Gross Delta', tooltip: 'Offer total gross minus current total gross.' },
     { label: 'Net Delta', tooltip: 'Offer net incl. RSU minus current net incl. RSU.' },
+    { label: 'Savings Delta', tooltip: 'Offer savings minus current savings using annualized monthly spend.' },
     { label: 'Cum. Gross Delta', tooltip: 'Running total of total gross deltas.' },
     { label: 'Cum. Net Delta', tooltip: 'Running total of net deltas.' },
+    { label: 'Cum. Savings Delta', tooltip: 'Running total of savings deltas.' },
   ]
 
   return (
@@ -709,6 +716,7 @@ function App() {
                   <td>{formatPercent(row.taxRate)}</td>
                   <td>{formatMoney(row.net)}</td>
                   <td>{formatMoney(row.netWithRsu)}</td>
+                  <td>{formatMoney(row.savings)}</td>
                 </tr>
               )}
             />
@@ -736,6 +744,7 @@ function App() {
                   <td>{formatPercent(row.taxRate)}</td>
                   <td>{formatMoney(row.net)}</td>
                   <td>{formatMoney(row.netWithRsu)}</td>
+                  <td>{formatMoney(row.savings)}</td>
                 </tr>
               )}
             />

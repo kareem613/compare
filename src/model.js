@@ -1,5 +1,34 @@
 export const HORIZON_YEARS = 10
 
+const DEFAULT_SCENARIO_SETTINGS = {
+  current: {
+    regionCode: 'ON',
+    baseSalary: 162000,
+    monthlySpend: 0,
+    annualRaisePct: 4,
+    variableTargetPct: 12,
+    quotaAttainmentPct: 100,
+    initialGrantValue: 90000,
+    vestingYears: 4,
+    refresherGrantValue: 28000,
+    refresherStartYear: 2,
+    stockGrowthPct: 8,
+  },
+  offer: {
+    regionCode: 'ON',
+    baseSalary: 198000,
+    monthlySpend: 0,
+    annualRaisePct: 5,
+    variableTargetPct: 15,
+    quotaAttainmentPct: 105,
+    initialGrantValue: 220000,
+    vestingYears: 4,
+    refresherGrantValue: 55000,
+    refresherStartYear: 2,
+    stockGrowthPct: 11,
+  },
+}
+
 const FEDERAL_TAX = {
   basicPersonalAmount: 15705,
   brackets: [
@@ -159,6 +188,7 @@ export function calculateScenario(settings) {
   const stockGrowthRate = clampPercent(settings.stockGrowthPct)
   const vestYears = Math.max(1, Math.min(5, Math.round(number(settings.vestingYears) || 4)))
   const baseSalary = Math.max(0, number(settings.baseSalary))
+  const annualSpend = Math.max(0, number(settings.monthlySpend)) * 12
   const grants = createGrantSchedule(settings)
 
   const rows = []
@@ -182,6 +212,7 @@ export function calculateScenario(settings) {
     const totalTax = estimateTax(totalGross, regionCode)
     const net = gross - grossTax.amount
     const netWithRsu = totalGross - totalTax.amount
+    const savings = netWithRsu - annualSpend
 
     rows.push({
       year,
@@ -193,6 +224,8 @@ export function calculateScenario(settings) {
       taxRate: totalTax.effectiveRate,
       net,
       netWithRsu,
+      annualSpend,
+      savings,
     })
 
     stacking.push({
@@ -206,11 +239,12 @@ export function calculateScenario(settings) {
     (accumulator, row) => ({
       gross: accumulator.gross + row.totalGross,
       net: accumulator.net + row.netWithRsu,
+      savings: accumulator.savings + row.savings,
       cash: accumulator.cash + row.gross,
       cashNet: accumulator.cashNet + row.net,
       equity: accumulator.equity + row.rsuGrant,
     }),
-    { gross: 0, net: 0, cash: 0, cashNet: 0, equity: 0 },
+    { gross: 0, net: 0, savings: 0, cash: 0, cashNet: 0, equity: 0 },
   )
 
   return {
@@ -233,6 +267,7 @@ export function calculateDelta(currentScenario, offerScenario) {
       grossDelta: offerRow.gross - currentRow.gross,
       totalGrossDelta: offerRow.totalGross - currentRow.totalGross,
       netDelta: offerRow.netWithRsu - currentRow.netWithRsu,
+      savingsDelta: offerRow.savings - currentRow.savings,
     }
   }).reduce((rows, row) => {
     const previous = rows.at(-1)
@@ -240,6 +275,7 @@ export function calculateDelta(currentScenario, offerScenario) {
       ...row,
       cumulativeGrossDelta: (previous?.cumulativeGrossDelta ?? 0) + row.totalGrossDelta,
       cumulativeNetDelta: (previous?.cumulativeNetDelta ?? 0) + row.netDelta,
+      cumulativeSavingsDelta: (previous?.cumulativeSavingsDelta ?? 0) + row.savingsDelta,
     })
     return rows
   }, [])
@@ -253,30 +289,25 @@ export function createScenarioRecord(name = 'Offer duel') {
     id,
     name,
     updatedAt: now,
+    settings: structuredClone(DEFAULT_SCENARIO_SETTINGS),
+  }
+}
+
+export function normalizeScenarioRecord(record) {
+  const defaults = structuredClone(DEFAULT_SCENARIO_SETTINGS)
+
+  return {
+    id: record?.id ?? crypto.randomUUID(),
+    name: record?.name ?? 'Offer duel',
+    updatedAt: record?.updatedAt ?? new Date().toISOString(),
     settings: {
       current: {
-        regionCode: 'ON',
-        baseSalary: 162000,
-        annualRaisePct: 4,
-        variableTargetPct: 12,
-        quotaAttainmentPct: 100,
-        initialGrantValue: 90000,
-        vestingYears: 4,
-        refresherGrantValue: 28000,
-        refresherStartYear: 2,
-        stockGrowthPct: 8,
+        ...defaults.current,
+        ...(record?.settings?.current ?? {}),
       },
       offer: {
-        regionCode: 'ON',
-        baseSalary: 198000,
-        annualRaisePct: 5,
-        variableTargetPct: 15,
-        quotaAttainmentPct: 105,
-        initialGrantValue: 220000,
-        vestingYears: 4,
-        refresherGrantValue: 55000,
-        refresherStartYear: 2,
-        stockGrowthPct: 11,
+        ...defaults.offer,
+        ...(record?.settings?.offer ?? {}),
       },
     },
   }
