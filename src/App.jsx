@@ -686,7 +686,7 @@ function App() {
     { label: 'Total Gross', tooltip: 'Cash gross plus vested equity.' },
     { label: 'Tax Rate', tooltip: 'Estimated tax divided by total gross.' },
     { label: 'Net (Base+Var)', tooltip: 'Cash gross minus estimated tax on cash gross.' },
-    { label: 'Total Income (inc. RSU)', tooltip: 'Total gross minus estimated tax on total gross.' },
+    { label: 'Total Net Income (Inc. RSU)', tooltip: 'Total gross minus estimated tax on total gross.' },
     { label: 'Savings', tooltip: 'Net incl. RSU minus annualized monthly spend.' },
   ]
 
