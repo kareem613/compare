@@ -686,8 +686,7 @@ function App() {
     { label: 'Total Gross', tooltip: 'Cash gross plus vested equity.' },
     { label: 'Tax Rate', tooltip: 'Estimated tax divided by total gross.' },
     { label: 'Net (Base+Var)', tooltip: 'Cash gross minus estimated tax on cash gross.' },
-    { label: 'Net (inc. RSU)', tooltip: 'Total gross minus estimated tax on total gross.' },
-    { label: 'Total income', tooltip: 'Base plus variable plus vested RSU (pre-tax total gross).' },
+    { label: 'Total Income (inc. RSU)', tooltip: 'Total gross minus estimated tax on total gross.' },
     { label: 'Savings', tooltip: 'Net incl. RSU minus annualized monthly spend.' },
   ]
 
@@ -746,7 +745,6 @@ function App() {
                   <td>{formatPercent(row.taxRate)}</td>
                   <td>{formatMoney(row.net)}</td>
                   <td>{formatMoney(row.netWithRsu)}</td>
-                  <td>{formatMoney(row.totalGross)}</td>
                   <td>{formatMoney(row.savings)}</td>
                 </tr>
               )}
@@ -775,7 +773,6 @@ function App() {
                   <td>{formatPercent(row.taxRate)}</td>
                   <td>{formatMoney(row.net)}</td>
                   <td>{formatMoney(row.netWithRsu)}</td>
-                  <td>{formatMoney(row.totalGross)}</td>
                   <td>{formatMoney(row.savings)}</td>
                 </tr>
               )}
