@@ -1,11 +1,10 @@
 {
   "ssw": {
-    "api_key": "rf_compare_7e70780cf3aefb15a497a90505f96362f0480be5bb5613cf",
+    "api_key": "rf_compare_4be47872216936ebf2888ea124ba65cf73f28c990f577006",
     "project_id": "compare"
   },
   "api_base": "https://lmwbdzgnleuvjacamnwl.supabase.co",
   "vercel": {
-    "project_name": "compare",
     "deploy_timeout_seconds": 900,
     "deploy_poll_seconds": 10
   },
