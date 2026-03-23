@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
@@ -6,6 +6,19 @@ import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    if (document.querySelector('script[data-project-id="compare"]')) return;
+    const script = document.createElement('script');
+    script.src = 'https://lmwbdzgnleuvjacamnwl.supabase.co/functions/v1/widget-script';
+    script.defer = true;
+    script.dataset.apiBase = 'https://lmwbdzgnleuvjacamnwl.supabase.co';
+    script.dataset.apiKey = 'rf_compare_4be47872216936ebf2888ea124ba65cf73f28c990f577006';
+    script.dataset.projectId = 'compare';
+    script.dataset.pollIntervalMs = '4000';
+    script.dataset.metadata = JSON.stringify({ environment: 'development' });
+    document.body.appendChild(script);
+  }, []);
 
   return (
     <>
